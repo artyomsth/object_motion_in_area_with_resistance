@@ -1,0 +1,1 @@
+# object_motion_in_area_with_resistance
