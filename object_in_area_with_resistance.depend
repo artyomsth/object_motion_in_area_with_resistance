@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1556402329 source:e:\programming\object_in_area_with_resistance\main.cpp
+	<iostream>
+	<iomanip>
+	<stdio.h>
+	<graphics.h>
+	<stdlib.h>
+	<math.h>
+	<windows.h>
+
