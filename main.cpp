@@ -14,22 +14,28 @@ Comparing curve of motion in both cases
 
 #define g 9.80665
 #define pi 3.141592
-#define N 100000
+#define N 65535
 
 using namespace std;
 
-uint32_t i_max;
 float x[N], y[N], v[1], vx[N], vy[N];
-float limit = 0, range = 0, h_max = 0;
+
+struct motion_description
+{
+    float t, range, h_max, y_min;
+    uint16_t num_of_dots;
+};
+
+motion_description object = {0,0,0,0};
 
 float compute_xy(float &m, float &dt, float &k);
-void draw_graph(uint16_t ymax, float &mp);
+void draw_graph(uint16_t ymax, float &multiplier);
 void setup_graphics();
 
 int main(void)
 {
-    uint16_t gcolor[2], accuracy;
-    float angle = 0, m = 0, mp = 1, t, dt = 0.01, k = 0;
+    uint16_t graph_color[2], accuracy;
+    float angle = 0, m = 0, multiplier = 1, dt = 0.01, k = 0;
     int16_t x1 = 540, y1 = 430, x2 = 540, y2 = 50;
 
     x[0] = 0;
@@ -42,9 +48,9 @@ int main(void)
     cout << "   Initial data:" << endl;
     cout << "   m (kg) = ";
     cin >> m;
-    while(m < 1)
+    while(m < 1 | m > 10000)
     {
-        cout << "   m should be >= 1\n";
+        cout << "   m should be in [1;10000]\n";
         cout << "   m (kg) = ";
         cin >> m;
     }
@@ -62,9 +68,9 @@ int main(void)
 
     cout << "   v[0] (m/s) = ";
     cin >> v[0];
-    while(v[0] <= 0 | v[0] > 1000)
+    while(v[0] <= 0 | v[0] > 10000)
     {
-        cout << "   v[0] should be in(0;1000]\n";
+        cout << "   v[0] should be in(0;10000]\n";
         cout << "   v[0] (m/s) = ";
         cin >> v[0];
     }
@@ -72,14 +78,14 @@ int main(void)
     cout << "\n   1 Purple\n   2 Green\n   3 Cyan";
     cout << "\n   4 Coral\n   5 Pink\n   6 Yellow" << endl;
     cout << "   Color (index) = ";
-    cin >> gcolor[0];
-    while (gcolor[0] < 1 | gcolor[0] > 6)
+    cin >> graph_color[0];
+    while (graph_color[0] < 1 | graph_color[0] > 6)
     {
         cout << "   Color index should be in [1 ; 6]" << endl;
         cout << "   Color (index) = ";
-        cin >> gcolor[0];
+        cin >> graph_color[0];
     }
-    gcolor[0]+=8;
+    graph_color[0]+=8;
 
     cout << endl;
     cout.setf(ios::fixed);
@@ -100,24 +106,22 @@ int main(void)
     }
 
     // reduce compute accuracy if graph is gonna be large
-    if (v[0] > 499)
+    if (v[0] > 2999)
         dt = 0.1;
+    else if (v[0] > 499)
+        dt = 0.05;
 
-    t = compute_xy(m, dt, k);
+    compute_xy(m, dt, k);
 
     // compute graph size multiplier value
-    if (range > h_max)
-    {
-        mp = 540 / range;
-    }
+    if (object.range > object.h_max)
+        multiplier = 540 / object.range;
     else
-    {
-        mp = 380 / h_max;
-    }
+        multiplier = 380 / object.h_max;
 
-    setcolor(gcolor[0]);
+    setcolor(graph_color[0]);
     outtextxy(x1, y2 * 2, "k = 0");
-    draw_graph(getmaxy() - 50, mp);
+    draw_graph(getmaxy() - 50, multiplier);
 
     cout << "   Accuracy (number of digits after point) = ";
     cin >> accuracy;
@@ -131,9 +135,9 @@ int main(void)
     cout << endl;
     cout << setprecision(accuracy)
          << "   1. Without resistance force:" << endl
-         << "   t = " << t << " s" << endl
-         << "   X max = " << range << " m" << endl
-         << "   Y max = " << h_max << " m" << endl << endl;
+         << "   t = " << object.t << " s" << endl
+         << "   X max = " << object.range << " m" << endl
+         << "   Y max = " << object.h_max << " m" << endl << endl;
 
     cout << "   k (coefficient of resistance) = ";
     cin >> k;
@@ -146,26 +150,26 @@ int main(void)
     }
 
     cout << "   Color (index) = ";
-    cin >> gcolor[1];
-    while (gcolor[1] < 1 | gcolor[1] > 6)
+    cin >> graph_color[1];
+    while (graph_color[1] < 1 | graph_color[1] > 6)
     {
         cout << "   Color (index) = ";
         cout << "   Color index should be in [1 ; 6]" << endl;
-        cin >> gcolor[1];
+        cin >> graph_color[1];
     }
-    gcolor[1]+=8;
+    graph_color[1]+=8;
 
-    t = compute_xy(m, dt, k);
-    setcolor(gcolor[1]);
+    compute_xy(m, dt, k);
+    setcolor(graph_color[1]);
     outtextxy(x1, y2 * 1.5, "k > 0");
-    draw_graph(getmaxy() - 50, mp);
+    draw_graph(getmaxy() - 50, multiplier);
 
     cout << endl;
     cout << setprecision(accuracy)
          << "   2. With resistance force:" << endl
-         << "   t = " << t << " s" << endl
-         << "   X max = " << range << " m" << endl
-         << "   Y max = " << h_max << " m" << endl << endl << "   ";
+         << "   t = " << object.t << " s" << endl
+         << "   X max = " << object.range << " m" << endl
+         << "   Y max = " << object.h_max << " m" << endl << endl << "   ";
 
     system("pause");
     restorecrtmode();
@@ -176,8 +180,6 @@ int main(void)
 
 float compute_xy(float &m, float &dt, float &k)
 {
-    float t = 0;
-    h_max = 0;
     for (int i = 1; i <= N; i++) // compute coordinates
     {
         vx[i] = vx[i - 1] - k * vx[i - 1] * dt / m;
@@ -185,32 +187,30 @@ float compute_xy(float &m, float &dt, float &k)
         x[i] = x[i - 1] + vx[i - 1] * dt;
         y[i] = y[i - 1] + vy[i - 1] * dt;
 
-        if (y[i] > h_max)
-            h_max = y[i];
+        if (y[i] > object.h_max)
+            object.h_max = y[i];
 
         if (y[i] <= 0 | i == N) // exit from loop in case of object fallen
         {
-            limit = y[i - 1];
-            range = x[i];
-            i_max = i;
-            t = i * dt;
+            object.y_min = y[i - 1];
+            object.range = x[i];
+            object.num_of_dots = i;
+            object.t = i * dt;
             break;
         }
     }
-
-    return(t);
 }
 
-void draw_graph(uint16_t ymax, float &mp)
+void draw_graph(uint16_t ymax, float &multiplier)
 {
     for (int i = 0; i <= N - 1; i++) // draw graph
     {
         for (int j = 0; j < 4; j++)
         {
-            line(50 + x[i] * mp, ymax - y[i] * mp + j, 50 + x[i + 1] * mp, ymax - y[i + 1] * mp + j);
-            line(50 + x[i] * mp + j, ymax - y[i] * mp, 50 + x[i + 1] * mp + j, ymax - y[i + 1] * mp);
+            line(50 + x[i] * multiplier, ymax - y[i] * multiplier + j, 50 + x[i + 1] * multiplier, ymax - y[i + 1] * multiplier + j);
+            line(50 + x[i] * multiplier + j, ymax - y[i] * multiplier, 50 + x[i + 1] * multiplier + j, ymax - y[i + 1] * multiplier);
         }
-        if (i > i_max / 2 && y[i] == limit) // end drawing
+        if (i > object.num_of_dots / 2 && y[i] == object.y_min) // end drawing
             break;
     }
 }
