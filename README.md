@@ -1,4 +1,4 @@
-# Modeling of object motion in area with resistance force and without it.
+# Modeling of motion of object thrown at an angle to the horizon in area with resistance force and without it.
 
 Features
 ---
