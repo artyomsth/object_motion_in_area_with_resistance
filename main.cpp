@@ -50,7 +50,7 @@ int main(void)
     cin >> m;
     while(m < 1 | m > 10000)
     {
-        cout << "   m should be in [1;10000]\n";
+        cout << "   m should be in [1 ; 10000]\n";
         cout << "   m (kg) = ";
         cin >> m;
     }
@@ -125,9 +125,9 @@ int main(void)
 
     cout << "   Accuracy (number of digits after point) = ";
     cin >> accuracy;
-    while (accuracy < 0)
+    while (accuracy < 0 | accuracy > 7)
     {
-        cout << "   Invalid value" << endl;
+        cout << "   Accuracy number shoud be in [0 ; 7]" << endl;
         cout << "   Accuracy (number of digits after point) = ";
         cin >> accuracy;
     }
