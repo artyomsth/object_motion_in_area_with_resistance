@@ -22,13 +22,11 @@ float x[N], y[N], v[1], vx[N], vy[N];
 
 struct motion_description
 {
-    float t, range, h_max, y_min;
-    uint16_t num_of_dots;
-};
+    float t = 0, range = 0, h_max = 0, y_min = 0;
+    uint16_t num_of_dots = 0;
+} object;
 
-motion_description object = {0,0,0,0};
-
-float compute_xy(float &m, float &dt, float &k);
+void compute_xy(float &m, float &dt, float &k);
 void draw_graph(uint16_t ymax, float &multiplier);
 void setup_graphics();
 
@@ -178,8 +176,9 @@ int main(void)
 
 // THE END. FUNCTIONS USED IN PROGRAM:
 
-float compute_xy(float &m, float &dt, float &k)
+void compute_xy(float &m, float &dt, float &k)
 {
+    object.h_max = 0;
     for (int i = 1; i <= N; i++) // compute coordinates
     {
         vx[i] = vx[i - 1] - k * vx[i - 1] * dt / m;
